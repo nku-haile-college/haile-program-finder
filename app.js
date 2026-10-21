@@ -107,11 +107,108 @@ function results() {
     <p class="small">Percentages compare each program to your top match. They aren't an admission decision; an advisor can help you weigh the details.</p>
     ${panel(top, true, r)}
     ${close ? panel(r.order[1], false, r) : ""}
+    ${emailForm(top)}
     <div class="actions">
       <button class="btn ghost" id="restart" type="button">Retake the quiz</button>
     </div>`;
   $("restart").addEventListener("click", () => { answers.fill(null); idx = 0; $("stepcount").textContent = "Graduate programs"; setProgress(0); show("intro"); });
+  wireEmail(r, top, close);
   show("results");
+}
+
+// ---------- Email my results ----------
+// Leave EMAIL_ENDPOINT empty for demo mode: nothing is sent, and the page shows a preview.
+// To go live, set it to a URL that accepts a JSON POST (a Google Apps Script web app,
+// a CRM form endpoint, etc.). The payload is { email, optIn, topProgram, secondProgram, scores, answers }.
+const EMAIL_ENDPOINT = "";
+const PRIVACY_URL = "https://inside.nku.edu/it/aboutus/governance/data-and-web-privacy.html";
+
+function emailForm(top) {
+  return `<form class="emailbox" id="emailForm" novalidate>
+    <div class="eyebrow">Keep your results</div>
+    <h3>Email me my results</h3>
+    <p>Get your match, the reasons behind it and next steps in your inbox.</p>
+    <div class="field">
+      <label for="em">Email address</label>
+      <div class="row">
+        <input id="em" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="emErr">
+        <button class="btn" type="submit" id="emSend">Email my results</button>
+      </div>
+      <p class="err" id="emErr" hidden></p>
+    </div>
+    <label class="consent" for="optin"><input type="checkbox" id="optin"> Also send me information about the ${PROGRAMS[top].short} program.</label>
+    <p class="small">We'll only use your email for what you choose above. <a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a></p>
+  </form>
+  <div id="emailDone" hidden></div>`;
+}
+
+function emailPreview(r, top, close, email) {
+  const P = PROGRAMS[top];
+  const second = close ? PROGRAMS[r.order[1]] : null;
+  const reasons = r.reasons[top].slice(0, 4);
+  return `<div class="mail" aria-label="Email preview">
+    <div class="mailhead">
+      <div><span>From</span>Haile College of Business Graduate Programs</div>
+      <div><span>To</span>${esc(email)}</div>
+      <div><span>Subject</span>Your Haile program match: ${P.short}</div>
+    </div>
+    <div class="mailbody">
+      <div class="mailbrand"><b>NKU</b>Haile College of Business</div>
+      <p>Hi there,</p>
+      <p>Thanks for taking the Haile Grad Program Finder. Based on your answers, your best fit is the <strong>${esc(P.name)} (${P.short})</strong>.</p>
+      ${reasons.length ? `<p><strong>Why it fits you</strong></p><ul>${reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${top === "MAcc" ? `<p><strong>Suggested track:</strong> ${esc(maccTrack(r.flags))}</p>` : ""}
+      <p><strong>At a glance</strong></p>
+      <ul>${P.facts.slice(0, 4).map(([a, b]) => `<li>${esc(a)}: ${esc(b)}</li>`).join("")}</ul>
+      ${second ? `<p>The ${esc(second.name)} (${second.short}) was a close second, so it may be worth a look too.</p>` : ""}
+      <p><a class="mailcta" href="${P.link}" target="_blank" rel="noopener">Explore the ${P.short}</a></p>
+      <p>Questions? ${esc(P.contact)}</p>
+      <p class="mailfoot">Haile College of Business · Northern Kentucky University · Nunn Drive, Highland Heights, KY 41099</p>
+    </div>
+  </div>`;
+}
+
+function wireEmail(r, top, close) {
+  const form = $("emailForm");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const email = $("em").value.trim();
+    const err = $("emErr");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      err.textContent = "Enter a valid email address, like name@example.com.";
+      err.hidden = false; $("em").setAttribute("aria-invalid", "true"); $("em").focus();
+      return;
+    }
+    err.hidden = true; $("em").removeAttribute("aria-invalid");
+    const done = $("emailDone");
+    if (EMAIL_ENDPOINT) {
+      $("emSend").disabled = true; $("emSend").textContent = "Sending…";
+      try {
+        const res = await fetch(EMAIL_ENDPOINT, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ email, optIn: $("optin").checked, topProgram: top, secondProgram: close ? r.order[1] : null, scores: r.s,
+            answers: answers.map((a, i) => ({ question: QUESTIONS[i].id, answer: QUESTIONS[i].opts[a].t })) }) });
+        if (!res.ok) throw new Error(res.status);
+        form.hidden = true;
+        done.innerHTML = `<div class="sent"><h3>Check your inbox</h3><p>We sent your results to <strong>${esc(email)}</strong>. If you don't see it in a few minutes, check your spam folder.</p></div>`;
+        done.hidden = false;
+      } catch (_) {
+        $("emSend").disabled = false; $("emSend").textContent = "Email my results";
+        err.textContent = "We couldn't send your results just now. Please try again in a moment.";
+        err.hidden = false;
+      }
+      return;
+    }
+    form.hidden = true;
+    done.innerHTML = `<div class="sent">
+      <div class="demo">Demo mode</div>
+      <h3>Here's the email you'd receive</h3>
+      <p>In this demo nothing is actually sent. Once email is connected, <strong>${esc(email)}</strong> would get this message${$("optin").checked ? `, plus follow-up information about the ${PROGRAMS[top].short}` : ""}.</p>
+      ${emailPreview(r, top, close, email)}
+      <div class="actions"><button class="btn ghost" type="button" id="emAgain">Use a different email</button></div>
+    </div>`;
+    done.hidden = false;
+    $("emAgain").addEventListener("click", () => { done.hidden = true; form.hidden = false; $("em").focus(); });
+  });
 }
 
 $("start").addEventListener("click", () => { idx = 0; render(); show("quiz"); });

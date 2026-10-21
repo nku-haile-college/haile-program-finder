@@ -43,6 +43,35 @@ Two rules are built into `app.js`:
 - **MBLI experience rule:** if someone reports under 3 years of experience, MBLI can't be their top result, and they see a note about a future fall cohort.
 - **MAcc track suggestion:** based on the undergraduate background question, results suggest the Expedited, Professional/Data Analytics, or APRT track.
 
+## Email my results
+
+The results page has an **Email my results** form with an email field and an optional "send me program information" checkbox.
+
+**Right now it runs in demo mode.** Nothing is sent. After someone submits, the page shows a preview of the email they would receive, labeled "Demo mode."
+
+To make it send real email, open `app.js` and set `EMAIL_ENDPOINT` to a URL that accepts a POST, such as a Google Apps Script web app or an admissions CRM form endpoint:
+
+```js
+const EMAIL_ENDPOINT = "https://script.google.com/macros/s/XXXX/exec";
+```
+
+The quiz sends this JSON to that URL:
+
+```json
+{
+  "email": "name@example.com",
+  "optIn": true,
+  "topProgram": "MBA",
+  "secondProgram": "MBLI",
+  "scores": { "MBA": 22, "MAcc": 6, "MBLI": 20 },
+  "answers": [{ "question": "goal", "answer": "Move up with a broader business skill set" }]
+}
+```
+
+The receiving service sends the email (the demo preview in `emailPreview()` is a ready-made template) and can log the lead. Once `EMAIL_ENDPOINT` is set, the demo preview is replaced by a "Check your inbox" confirmation.
+
+Before going live, confirm with NKU IT and MarComm which service may handle prospective students' email addresses, and check that the privacy link (`PRIVACY_URL` in `app.js`) points where they want.
+
 ## Analytics (optional)
 
 To track completions, add your Google Analytics or Tag Manager snippet to the `<head>` of `index.html`, and fire an event inside the `results()` function in `app.js` with the top program, for example:
