@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Find out whether the Haile MBA, MAcc or MBLI at Northern Kentucky University is the best fit for you.">
+<title>Haile Grad Program Finder | NKU Haile College of Business</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand"><b>NKU</b>Haile College of Business</div>
+    <div class="stepcount" id="stepcount">Graduate programs</div>
+  </header>
+  <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+
+  <section class="screen" id="intro">
+    <div class="eyebrow">Graduate program finder · 10 questions · about 3 minutes</div>
+    <h1>Which Haile master's <span class="hl">fits you?</span></h1>
+    <p class="lede">Haile offers three graduate business degrees, each built for a different kind of professional. Answer ten quick questions about your goals, experience and schedule, and we'll show you where you fit best and why.</p>
+    <div class="programs">
+      <div><strong>MBA</strong><span>Master of Business Administration. Broad business toolkit, 100% online.</span></div>
+      <div><strong>MAcc</strong><span>Master of Accountancy. CPA pathway with four tracks.</span></div>
+      <div><strong>MBLI</strong><span>Master of Business Leadership &amp; Innovation. Hybrid leadership cohort.</span></div>
+    </div>
+    <div class="actions"><button class="btn" id="start" type="button">Start the quiz</button></div>
+    <p class="small">There are no wrong answers. Pick whatever is closest to true for you today.</p>
+  </section>
+
+  <section class="screen" id="quiz" hidden>
+    <div class="qnum" id="qnum"></div>
+    <h2 id="qtext"></h2>
+    <p class="lede" id="qhelp"></p>
+    <fieldset class="options" id="opts"></fieldset>
+    <div class="actions">
+      <button class="btn ghost" id="back" type="button">Back</button>
+      <button class="btn" id="next" type="button" disabled>Next</button>
+    </div>
+  </section>
+
+  <section class="screen" id="results" hidden></section>
+</div>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
